@@ -1,0 +1,40 @@
+using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Mvc;
+using Shared;
+
+namespace TrackerApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class GpsPositionController : ControllerBase
+{
+    private readonly AppDbContext _db;
+
+    public GpsPositionController(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SavePosition([FromBody] GpsPosition position)
+    {
+        if (position == null) return BadRequest("Position data is required");
+
+        if (position.TimeStamp == default) position.TimeStamp == DateTime.Now;
+
+        _db.GpsPosition.Add(position);
+        await _db.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetLatestPosition), new {id = position.Id}, position);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetLatestPosition()
+    {
+        var latestPosition = await _db.GpsPosition.OrderByDescending(p => p.TimeStamp).FirstOrDefaultAsync();
+
+        if (latestPosition == null) return NotFound("No GPS positions found");
+
+        return Ok(latestPosition);
+    }
+}
