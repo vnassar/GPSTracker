@@ -1,6 +1,7 @@
 using System;
 using System.IO.Ports;
 using Microsoft.Extensions.Logging;
+using Shared;
 
 namespace TrackerPi.Gps
 {
@@ -127,16 +128,5 @@ namespace TrackerPi.Gps
             Close();
             _serialPort.Dispose();
         }
-    }
-
-
-    /// <summary>
-    /// GPS position with timestamp
-    /// </summary>
-    public class GpsPosition
-    {
-        public DateTime TimeStamp {get;set;}
-        public double Latitude {get;set;}
-        public double Longitude {get;set;}
     }
 }
