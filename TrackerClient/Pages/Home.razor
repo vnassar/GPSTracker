@@ -5,3 +5,43 @@
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+@if (message != null)
+{
+    <p>@message</p>
+}
+
+@if (loading)
+{
+    <p>Loading...</p>
+}
+
+
+<button @onclick="Check">Check</button>
+
+
+@code {
+    private string? message;
+    private bool loading = false;
+
+
+    [Inject]
+    private HttpClient Http {get; set;} = default!;
+
+    private async Task Check()
+    {
+        loading = true;
+        try 
+        {
+            message = await Http.GetStringAsync("api/hello");
+        }
+        catch (Exception ex)
+        {
+            message = $"ERROR: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

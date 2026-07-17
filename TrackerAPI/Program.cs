@@ -5,6 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddCors(Options =>
+{
+   Options.AddPolicy("AllowBlazor", policy =>
+    policy.WithOrigins("http://localhost:5228").AllowAnyMethod().AllowAnyHeader());
+});
 
 var app = builder.Build();
 
@@ -17,7 +22,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseCors("AllowBlazor");
 app.MapControllers();
 
 app.Run();
