@@ -1,4 +1,8 @@
-﻿@page "/"
+﻿@inject IJSRuntime JS
+@inject HttpClient Http
+
+@page "/"
+@using Shared
 
 <PageTitle>Home</PageTitle>
 
@@ -6,7 +10,7 @@
 
 Welcome to your new app.
 
-@if (message != null)
+@if (message != string.Empty)
 {
     <p>@message</p>
 }
@@ -16,32 +20,35 @@ Welcome to your new app.
     <p>Loading...</p>
 }
 
+<br />
+<br />
+<br />
+<br />
 
-<button @onclick="Check">Check</button>
+<div class="map-container">
+    <div id="map" style="height: 400px; width: 100%;"></div>
+</div>
 
 
 @code {
-    private string? message;
+    //private IJSObjectReference? _mapInstance;
+
+    private string message = string.Empty;
     private bool loading = false;
-
-
-    [Inject]
-    private HttpClient Http {get; set;} = default!;
-
-    private async Task Check()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        loading = true;
-        try 
-        {
-            message = await Http.GetStringAsync("api/hello");
-        }
-        catch (Exception ex)
-        {
-            message = $"ERROR: {ex.Message}";
-        }
-        finally
-        {
-            loading = false;
-        }
+        if (!firstRender) return;
+
+        await JS.InvokeVoidAsync("initMap", "map");
+        
+    }
+
+
+    private async Task RefreshLatestPosition()
+    {
+        var position = await Http.GetFromJsonAsync<GpsPosition>("/api/gpsposition");
+        if (position == null) return;
+
+        await JS.InvokeVoidAsync("updateMarker", position.Latitude, position.Longitude);
     }
 }

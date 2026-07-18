@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
+using TrackerAPI.Data;
 
-namespace TrackerApi.Controllers;
+namespace TrackerAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -20,12 +22,12 @@ public class GpsPositionController : ControllerBase
     {
         if (position == null) return BadRequest("Position data is required");
 
-        if (position.TimeStamp == default) position.TimeStamp == DateTime.Now;
+        if (position.TimeStamp == default) position.TimeStamp = DateTime.UtcNow;
 
         _db.GpsPosition.Add(position);
         await _db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetLatestPosition), new {id = position.Id}, position);
+        return Ok();
     }
 
     [HttpGet]
