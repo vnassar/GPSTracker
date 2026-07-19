@@ -20,6 +20,8 @@ Welcome to your new app.
     <p>Loading...</p>
 }
 
+<button @onclick="QuickCheck">Quick Check api</button>
+
 <br />
 <br />
 <br />
@@ -51,4 +53,27 @@ Welcome to your new app.
 
         await JS.InvokeVoidAsync("updateMarker", position.Latitude, position.Longitude);
     }
+
+    public async Task QuickCheck()
+    {
+        try
+        {
+            var response  = await Http.GetAsync("/api/hello");
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Success!";
+            }
+            else
+            {
+                message = $"Failed http request: {response.StatusCode}";
+            }
+            StateHasChanged();
+            
+        }
+        catch (Exception ex)
+        {
+            message = $"Exception with quick check: {ex.Message}";
+        }
+    }
+        
 }
