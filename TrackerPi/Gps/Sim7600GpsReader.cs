@@ -57,7 +57,7 @@ namespace TrackerPi.Gps
 
                     if (string.IsNullOrWhiteSpace(message)) return null;
 
-                    if (message.StartsWith("$")) return message;
+                    if (message.StartsWith("$GPPA")) return message;
 
                     return null;
                 }
