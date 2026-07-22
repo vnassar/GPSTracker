@@ -1,57 +1,98 @@
 ﻿@inject IJSRuntime JS
 @inject HttpClient Http
+@inject ISnackbar Snackbar
 
 @page "/"
 @using Shared
+@implements IDisposable
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudPaper Class="mt-5" Elevation="0">
+            <MudStack Row="true" Spacing="3">
+                <MudText Typo="Typo.body2">Connected To Server: </MudText>
+                @if(connectedToServer)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" />
+                }
 
-Welcome to your new app.
+                @if(loadingPosition)
+                {
+                    <MudText Typo="Typo.body2">Refreshing gps position...</MudText>
+                    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+                }
+                
+            </MudStack>
 
-@if (message != string.Empty)
-{
-    <p>@message</p>
-}
+        <div class="map-container">
+            <div id="map" style="height: 400px; width: 100%;"></div>
+        </div>
+    </MudPaper>
+</MudContainer>
 
-@if (loading)
-{
-    <p>Loading...</p>
-}
-
-<button @onclick="QuickCheck">Quick Check api</button>
-
-<br />
-<br />
-<br />
-<br />
-
-<div class="map-container">
-    <div id="map" style="height: 400px; width: 100%;"></div>
-</div>
 
 
 @code {
     //private IJSObjectReference? _mapInstance;
 
     private string message = string.Empty;
-    private bool loading = false;
+    private bool loadingPosition = false;
+    private bool connectedToServer = false;
+    private CancellationTokenSource _cts = new CancellationTokenSource();
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
         await JS.InvokeVoidAsync("initMap", "map");
+
+        await ContinouslyRefreshGPSAsync();
         
     }
 
-
-    private async Task RefreshLatestPosition()
+    private async Task ContinouslyRefreshGPSAsync()
     {
-        var position = await Http.GetFromJsonAsync<GpsPosition>("/api/gpsposition");
-        if (position == null) return;
+        _ = Task.Run(async () => 
+        {
+            while (!_cts.IsCancellationRequested)
+        {
+            await RefreshLatestPositionAsync();
+            StateHasChanged();
+            await Task.Delay(30000);
+        }
+        });
+    }
 
-        await JS.InvokeVoidAsync("updateMarker", position.Latitude, position.Longitude);
+
+    private async Task RefreshLatestPositionAsync()
+    {
+        loadingPosition = true;
+        StateHasChanged();
+        await Task.Delay(1000); //
+        try
+        {
+            var position = await Http.GetFromJsonAsync<GpsPosition>("/api/gpsposition");
+            if (position == null) return;
+            connectedToServer = true;
+
+            await JS.InvokeVoidAsync("updateMarker", position.Latitude, position.Longitude);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Exception while trying to refresh position: {ex.Message}", Severity.Error);
+            connectedToServer = false;
+        }
+        finally
+        {
+            loadingPosition = false;
+            StateHasChanged();
+        }
     }
 
     public async Task QuickCheck()
@@ -75,5 +116,10 @@ Welcome to your new app.
             message = $"Exception with quick check: {ex.Message}";
         }
     }
-        
+    
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+    }
 }

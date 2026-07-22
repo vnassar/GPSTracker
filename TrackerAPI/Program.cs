@@ -11,8 +11,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddCors(Options =>
 {
    Options.AddPolicy("AllowBlazor", policy =>
-    policy.WithOrigins("https://tracker.vnassar.com").AllowAnyMethod().AllowAnyHeader());
-    //policy.WithOrigins("http://localhost:5228").AllowAnyMethod().AllowAnyHeader());
+    //policy.WithOrigins("https://tracker.vnassar.com").AllowAnyMethod().AllowAnyHeader());
+    policy.WithOrigins("http://localhost:5228").AllowAnyMethod().AllowAnyHeader());
 });
 
 builder.Services.AddDbContext<AppDbContext>(options => 
